@@ -1,0 +1,12 @@
+pixel_value,kind,fid,class_or_name,lat,lon
+1,mineral,462/463,phyllosilicate,-5.33,137.64
+1,mineral,3517/3518,phyllosilicate,-4.84,136.88
+2,mineral,24/25,silica,-4.98,136.75
+1,mineral,466/467,phyllosilicate,-5.06,136.6
+1,mineral,3519/3520,phyllosilicate,-5.12,136.67
+1,mineral,464/465,phyllosilicate,-4.15,137.22
+10,landmark,,Exploration Zone FID 6,-4.5965,137.4019
+11,landmark,,Exploration Zone FID 7/8,-4.6,137.0
+12,landmark,,Aeolis Mons,-5.0834,137.8453
+13,landmark,,Gale crater centre (Trek),-5.3672,137.811
+20,ring,,Exploration Zone 100 km radius (FID 6),-4.5965,137.4019
