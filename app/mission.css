@@ -1,0 +1,121 @@
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; overflow: hidden; background: #050507; color: #f1e6dc;
+  font-family: "Inter", "Segoe UI", system-ui, sans-serif; font-size: 14px; }
+
+#map { position: fixed; inset: 0; background: #0b0807; }
+.leaflet-container { background: #0b0807; font: inherit; }
+.leaflet-control-attribution { background: #120c0acc !important; color: #b9a89a !important; }
+.leaflet-control-attribution a { color: #ffcf9f !important; }
+
+/* ---------- Верхня панель ---------- */
+#bar { position: fixed; top: 0; left: 0; right: 0; z-index: 1000; height: 56px;
+  display: flex; align-items: center; gap: 24px; padding: 0 20px;
+  background: #0a0706e6; border-bottom: 1px solid #ffffff14; backdrop-filter: blur(6px); }
+.brand { font-weight: 700; letter-spacing: .2em; color: #ff9a5c; text-decoration: none; }
+.site-title b { font-size: 16px; }
+.site-title span { color: #b9a89a; margin-left: 6px; }
+#modes { display: flex; gap: 4px; margin-left: auto; background: #ffffff0d; padding: 4px; border-radius: 10px; }
+#modes button { font: inherit; color: #b9a89a; background: none; border: 0; padding: 7px 14px; border-radius: 7px; cursor: pointer; }
+#modes button.active { background: #f1e6dc; color: #120c0a; font-weight: 600; }
+#modes button:disabled { opacity: .35; cursor: not-allowed; }
+#cursor-coords { font-family: ui-monospace, Consolas, monospace; font-size: 12px; color: #b9a89a; min-width: 170px; text-align: right; }
+
+/* ---------- Панелі ---------- */
+.panel { position: fixed; z-index: 900; background: #120c0ae8; border: 1px solid #ffffff14;
+  border-radius: 14px; padding: 16px 18px; backdrop-filter: blur(8px); overflow: auto; }
+.panel h3 { margin: 0 0 10px; font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: #b9a89a; }
+#layers { left: 16px; top: 72px; width: 250px; max-height: calc(100% - 88px); }
+.side { right: 16px; top: 72px; width: 340px; max-height: calc(100% - 88px); display: none; }
+body.mode-briefing #briefing, body.mode-plan #plan { display: block; }
+body.mode-walk #layers, body.mode-walk .leaflet-control-zoom { display: none; }
+
+.eyebrow { font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: #ff9a5c; margin: 14px 0 6px; }
+.eyebrow:first-child { margin-top: 0; }
+.note { color: #8f8076; font-size: 12px; line-height: 1.45; }
+.hint { color: #b9a89a; font-size: 12px; }
+p { line-height: 1.5; }
+
+.layer-group { margin-bottom: 10px; }
+.layer-group > div:first-child { font-size: 11px; color: #8f8076; text-transform: uppercase; letter-spacing: .1em; margin-bottom: 4px; }
+.layer-item { display: flex; align-items: center; gap: 8px; padding: 4px 0; cursor: pointer; }
+.layer-item input { accent-color: #ff7a3c; }
+#legend { border-top: 1px solid #ffffff14; margin-top: 8px; padding-top: 8px; font-size: 12px; }
+#legend .lg { display: flex; align-items: center; gap: 8px; margin: 3px 0; }
+#legend .sw { width: 12px; height: 12px; border-radius: 3px; flex: none; }
+#legend .lg-title { color: #8f8076; margin: 6px 0 2px; }
+
+.facts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.facts div { background: #ffffff08; border-radius: 8px; padding: 8px 10px; }
+.facts span { display: block; font-size: 11px; color: #8f8076; }
+.facts b { font-size: 15px; }
+
+#brief-targets, #stops { padding-left: 20px; margin: 0; }
+#brief-targets li { margin-bottom: 10px; }
+#brief-targets li b { display: block; }
+#brief-targets li small { color: #b9a89a; }
+#stops li { padding: 5px 0; display: flex; justify-content: space-between; gap: 8px; }
+#stops li.home { color: #b9a89a; }
+#stops button { background: none; border: 0; color: #8f8076; cursor: pointer; font-size: 14px; }
+#stops button:hover { color: #ff7a3c; }
+
+.btn { font: inherit; padding: 9px 14px; border-radius: 8px; cursor: pointer; width: 100%; margin-top: 8px;
+  background: transparent; color: #f1e6dc; border: 1px solid #ffffff2a; }
+.btn:hover { border-color: #ffffff55; }
+.btn.primary { background: #ff7a3c; color: #120c0a; border-color: #ff7a3c; font-weight: 600; }
+.btn:disabled { opacity: .4; cursor: not-allowed; }
+.row { display: flex; gap: 8px; }
+
+.budget { margin-top: 10px; }
+.budget-label { display: flex; justify-content: space-between; font-size: 12px; color: #b9a89a; margin-bottom: 4px; }
+.budget-bar { height: 8px; background: #ffffff14; border-radius: 4px; overflow: hidden; }
+.budget-bar div { height: 100%; background: #6fcf8a; transition: width .4s; }
+.budget-bar div.warn { background: #f2c14e; }
+.budget-bar div.over { background: #ff5a4a; }
+#warnings { padding-left: 18px; color: #f2c14e; font-size: 12px; }
+
+/* Мітки на карті */
+.marker-home, .marker-target { display: grid; place-items: center; border-radius: 50%; font-weight: 700; font-size: 12px; }
+.marker-home { background: #f1e6dc; color: #120c0a; border: 2px solid #120c0a; }
+.marker-target { background: #ff7a3c; color: #120c0a; border: 2px solid #120c0a; }
+.marker-astro { width: 16px; height: 16px; border-radius: 50%; background: #5ad1ff; border: 3px solid #e9fbff; box-shadow: 0 0 12px #5ad1ff; }
+.leaflet-popup-content-wrapper, .leaflet-popup-tip { background: #120c0a; color: #f1e6dc; }
+.leaflet-popup-content { margin: 10px 14px; }
+
+/* ---------- Режим виходу (HUD) ---------- */
+#hud { display: none; position: fixed; inset: 56px 0 0 0; z-index: 950; pointer-events: none;
+  font-family: ui-monospace, Consolas, monospace; color: #c8f3ff; }
+body.mode-walk #hud { display: block; }
+body.mode-walk .leaflet-tile-pane { filter: grayscale(.6) brightness(.55) contrast(1.1); }
+#hud .hud-top { position: absolute; top: 18px; left: 50%; transform: translateX(-50%);
+  display: flex; gap: 16px; align-items: center; background: #02121acc; border: 1px solid #5ad1ff55;
+  padding: 10px 18px; border-radius: 12px; }
+.hud-arrow { font-size: 34px; color: #5ad1ff; transition: transform .3s; }
+.hud-label { font-size: 11px; opacity: .7; text-transform: uppercase; letter-spacing: .1em; }
+.hud-big { font-size: 18px; font-weight: 700; }
+.hud-sub { font-size: 13px; opacity: .85; }
+.hud-left, .hud-right { position: absolute; top: 18px; width: 230px; background: #02121acc;
+  border: 1px solid #5ad1ff55; border-radius: 12px; padding: 12px 14px; }
+.hud-left { left: 18px; } .hud-right { right: 18px; }
+.hud-item { display: flex; justify-content: space-between; margin: 4px 0; font-size: 13px; }
+.hud-item span { opacity: .7; }
+.hud-res span { font-size: 12px; opacity: .7; }
+.hud-bar { height: 8px; background: #ffffff1a; border-radius: 4px; overflow: hidden; margin-top: 4px; }
+.hud-bar div { height: 100%; width: 100%; background: #5ad1ff; transition: width .3s; }
+.hud-bar div.warn { background: #f2c14e; } .hud-bar div.over { background: #ff5a4a; }
+#hud-alert { position: absolute; top: 110px; left: 50%; transform: translateX(-50%);
+  background: #4a0e0add; border: 1px solid #ff5a4a; color: #ffd6d0; padding: 8px 16px; border-radius: 10px; font-size: 14px; }
+.hud-controls { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+  display: flex; gap: 8px; pointer-events: auto; align-items: center; }
+.hud-controls .btn { width: auto; margin: 0; background: #02121add; color: #c8f3ff; border-color: #5ad1ff66; }
+.hud-controls select { font: inherit; background: #02121a; color: #c8f3ff; border: 1px solid #5ad1ff66; border-radius: 8px; padding: 8px; }
+
+#checkpoint { position: fixed; z-index: 1100; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  width: 420px; background: #02121af2; border: 1px solid #5ad1ff88; color: #c8f3ff; border-radius: 14px; padding: 20px; }
+#checkpoint h2 { margin: 4px 0 10px; color: #fff; }
+#checkpoint .eyebrow { color: #5ad1ff; }
+#cp-photo img { width: 100%; border-radius: 8px; }
+#cp-photo .ph { height: 160px; border: 1px dashed #5ad1ff55; border-radius: 8px; display: grid; place-items: center;
+  color: #5ad1ffaa; font-size: 12px; text-align: center; padding: 10px; }
+
+#toast { position: fixed; z-index: 1200; bottom: 20px; left: 50%; transform: translateX(-50%);
+  background: #3a1d10f2; border: 1px solid #ff9a5c66; padding: 10px 16px; border-radius: 10px; }

@@ -4,28 +4,123 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Marswalk — карта місії</title>
-  <link rel="stylesheet" href="style.css" />
-  <style>
-    body { display: grid; place-items: center; overflow: auto; }
-    main { max-width: 560px; padding: 32px; text-align: center; }
-    h1 { color: #ff9a5c; }
-    p { color: #e3d5c9; line-height: 1.6; }
-  </style>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="mission.css" />
 </head>
-<body>
-  <main>
-    <div class="brand">MARSWALK <span>/ карта місії</span></div>
-    <h1 id="title">Jezero</h1>
-    <p>
-      Тут буде детальна карта ділянки: шари (знімок, рельєф, ухили, геологія),
-      маршрут з бюджетом повернення, картки зупинок із фото Perseverance і HUD-режим.
-      Це наступний етап.
-    </p>
-    <p><a class="btn primary" href="index.html#jezero">← Назад до глобуса</a></p>
-  </main>
-  <script>
-    const site = new URLSearchParams(location.search).get('site');
-    if (site === 'jezero') document.getElementById('title').textContent = 'Кратер Jezero';
-  </script>
+<body class="mode-briefing">
+  <div id="map"></div>
+
+  <!-- Верхня панель -->
+  <header id="bar">
+    <a class="brand" href="index.html">MARSWALK</a>
+    <div class="site-title"><b id="site-name">…</b> <span id="site-subtitle"></span></div>
+    <nav id="modes">
+      <button data-mode="briefing" class="active">Брифінг</button>
+      <button data-mode="plan">Планування</button>
+      <button data-mode="walk">Вихід</button>
+    </nav>
+    <div id="cursor-coords"></div>
+  </header>
+
+  <!-- Шари (ліворуч) -->
+  <aside id="layers" class="panel">
+    <h3>Шари</h3>
+    <div id="layer-list"></div>
+    <div id="legend"></div>
+  </aside>
+
+  <!-- Брифінг (праворуч) -->
+  <aside id="briefing" class="panel side">
+    <div class="eyebrow">Мета виходу</div>
+    <p id="objective"></p>
+    <div class="facts">
+      <div><span>Ліміт виходу</span><b id="f-limit"></b></div>
+      <div><span>Екіпаж</span><b id="f-crew"></b></div>
+      <div><span>Швидкість</span><b id="f-speed"></b></div>
+    </div>
+    <div class="eyebrow">Наукові зупинки</div>
+    <ol id="brief-targets"></ol>
+    <p class="note" id="site-note"></p>
+    <button class="btn primary" data-goto="plan">До планування маршруту →</button>
+  </aside>
+
+  <!-- Планування (праворуч) -->
+  <aside id="plan" class="panel side">
+    <div class="eyebrow">Зупинки</div>
+    <ol id="stops"></ol>
+    <p class="hint">Клікни на карті, щоб додати зупинку. Маршрут завжди повертається на базу.</p>
+    <div class="row">
+      <button class="btn" id="btn-default">Стандартні цілі</button>
+      <button class="btn" id="btn-clear">Очистити</button>
+    </div>
+    <button class="btn primary" id="btn-route">Побудувати маршрут</button>
+
+    <div id="summary" hidden>
+      <div class="eyebrow">Маршрут</div>
+      <div class="facts">
+        <div><span>Відстань</span><b id="s-dist"></b></div>
+        <div><span>Ходьба</span><b id="s-walk"></b></div>
+        <div><span>Роботи на зупинках</span><b id="s-work"></b></div>
+        <div><span>Макс. ухил</span><b id="s-slope"></b></div>
+        <div><span>Доза радіації</span><b id="s-dose"></b></div>
+      </div>
+      <div class="budget">
+        <div class="budget-label"><span>Весь вихід</span><b id="s-total"></b></div>
+        <div class="budget-bar"><div id="s-bar"></div></div>
+      </div>
+      <ul id="warnings"></ul>
+      <button class="btn primary" data-goto="walk">Почати вихід →</button>
+    </div>
+    <p class="note" id="data-source"></p>
+  </aside>
+
+  <!-- HUD виходу -->
+  <div id="hud">
+    <div class="hud-top">
+      <div class="hud-arrow" id="hud-arrow">▲</div>
+      <div>
+        <div class="hud-label">Наступна точка</div>
+        <div class="hud-big" id="hud-next">—</div>
+        <div class="hud-sub" id="hud-next-dist">—</div>
+      </div>
+    </div>
+    <div class="hud-left">
+      <div class="hud-item"><span>Час виходу</span><b id="hud-elapsed">0:00</b></div>
+      <div class="hud-item"><span>Лишилось до ліміту</span><b id="hud-left">—</b></div>
+      <div class="hud-item"><span>Потрібно до кінця</span><b id="hud-need">—</b></div>
+      <div class="hud-res"><span>Ресурс</span><div class="hud-bar"><div id="hud-res"></div></div></div>
+    </div>
+    <div class="hud-right">
+      <div class="hud-item"><span>Точність позиції</span><b id="hud-sigma">± 5 м</b></div>
+      <div class="hud-item"><span>Пройдено</span><b id="hud-done">0.0 км</b></div>
+    </div>
+    <div id="hud-alert" hidden></div>
+    <div class="hud-controls">
+      <button class="btn" id="hud-play">▶ Старт</button>
+      <select id="hud-speed">
+        <option value="60">×60</option>
+        <option value="180" selected>×180</option>
+        <option value="600">×600</option>
+      </select>
+      <button class="btn" id="hud-restart">↺ Спочатку</button>
+      <button class="btn" data-goto="plan">Завершити</button>
+    </div>
+  </div>
+
+  <!-- Контрольна точка під час виходу -->
+  <div id="checkpoint" hidden>
+    <div class="eyebrow">Контрольна точка</div>
+    <h2 id="cp-name"></h2>
+    <div id="cp-photo"></div>
+    <p id="cp-task"></p>
+    <p class="note">Порівняй вид перед собою з фото. Підтвердження орієнтира скидає похибку позиції.</p>
+    <button class="btn primary" id="cp-confirm">Підтверджую орієнтир, виконати роботу</button>
+  </div>
+
+  <div id="toast" hidden></div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="sites.js"></script>
+  <script src="mission.js"></script>
 </body>
 </html>
