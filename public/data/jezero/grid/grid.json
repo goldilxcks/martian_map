@@ -1,0 +1,13 @@
+{
+  "cell_m": 77.94,
+  "bbox": [
+    18.211702,
+    77.16114,
+    18.72052,
+    77.6983
+  ],
+  "rows": 378,
+  "cols": 399,
+  "factor": 4,
+  "source": "JEZ_ctx_B_soc_008_DTM_MOLAtopography_DeltaGeoid_20m_Eqc_latTs0_lon0.tif"
+}
