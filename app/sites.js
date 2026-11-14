@@ -22,6 +22,12 @@ window.SITES_CONFIG = {
         id: 'aqueous_minerals', name: 'Водні мінерали', type: 'geojson', group: 'science',
         url: '../public/data/jezero/aqueous_minerals.geojson', styleBy: 'class',
       },
+      {
+        id: 'slope', name: 'Ухили (заборонені зони)', type: 'image', group: 'safety',
+        url: '../public/data/jezero/slope.png',
+        bbox: [18.211027, 77.160465, 18.721195, 77.698975], opacity: 0.75,
+        legend: [['#ffdc3c', '10–18°'], ['#ff8c28', '18–25°'], ['#e62828', 'заборонено для маршруту']],
+      },
     ],
   },
   sharp: {
