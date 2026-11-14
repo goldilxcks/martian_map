@@ -179,3 +179,7 @@ dist/
 .DS_Store
 Thumbs.db
 desktop.ini
+
+public/data/jezero/grid/radiation.npy
+public/data/jezero/targets.json
+scripts/data/make_radiation.py
