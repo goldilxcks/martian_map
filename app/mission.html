@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Marswalk — карта місії</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    body { display: grid; place-items: center; overflow: auto; }
+    main { max-width: 560px; padding: 32px; text-align: center; }
+    h1 { color: #ff9a5c; }
+    p { color: #e3d5c9; line-height: 1.6; }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="brand">MARSWALK <span>/ карта місії</span></div>
+    <h1 id="title">Jezero</h1>
+    <p>
+      Тут буде детальна карта ділянки: шари (знімок, рельєф, ухили, геологія),
+      маршрут з бюджетом повернення, картки зупинок із фото Perseverance і HUD-режим.
+      Це наступний етап.
+    </p>
+    <p><a class="btn primary" href="index.html#jezero">← Назад до глобуса</a></p>
+  </main>
+  <script>
+    const site = new URLSearchParams(location.search).get('site');
+    if (site === 'jezero') document.getElementById('title').textContent = 'Кратер Jezero';
+  </script>
+</body>
+</html>

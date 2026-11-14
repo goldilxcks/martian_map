@@ -1,0 +1,8 @@
+{
+  "min_m": -7467.293082421875,
+  "max_m": 18251.47297245683,
+  "width": 4096,
+  "height": 2048,
+  "dem_source": "megt.img",
+  "color_source": "mars_color_usgs.jpg"
+}

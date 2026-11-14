@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Marswalk — глобус Марса</title>
+  <link rel="stylesheet" href="style.css" />
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+  <div id="globe"></div>
+  <div id="labels"></div>
+
+  <header id="topbar">
+    <div class="brand">MARSWALK <span>/ вибір місії</span></div>
+    <div id="coords">наведи на планету</div>
+  </header>
+
+  <div id="demo-banner" hidden>
+    Демо-текстура (згенерована). Поклади справжні дані в <code>textures/</code>, інструкція в README.
+  </div>
+
+  <aside id="controls-panel">
+    <label>
+      Перебільшення рельєфу: <b id="exag-value">10×</b>
+      <input id="exag" type="range" min="1" max="40" step="1" value="10" />
+    </label>
+  </aside>
+
+  <aside id="site-panel" hidden>
+    <div class="site-status" id="site-status"></div>
+    <h2 id="site-name"></h2>
+    <div class="site-coords" id="site-coords"></div>
+    <p id="site-desc"></p>
+    <div class="buttons">
+      <a id="site-open" class="btn primary" href="#">Відкрити карту місії →</a>
+      <button id="site-back" class="btn">← До глобуса</button>
+    </div>
+  </aside>
+
+  <div id="loading">Завантаження Марса…</div>
+
+  <script type="module" src="main.js"></script>
+</body>
+</html>

@@ -147,3 +147,35 @@ vite.config.ts.timestamp-*
 
 # Turbo Repo
 .turbo
+
+
+# --- Великі вихідні дані Марса (качаються скриптами / вручну) ---
+data/raw/*.tif
+data/raw/*.tiff
+data/raw/*.img
+data/raw/tiles_cache/
+*.part
+
+# --- Проміжна текстура з тайлів USGS (можна відтворити fetch_color_tiles.py) ---
+app/textures/mars_color_usgs.jpg
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+.env
+.pytest_cache/
+.mypy_cache/
+
+# --- Node / фронтенд (якщо з'явиться) ---
+node_modules/
+dist/
+
+# --- Редактори та ОС ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini

@@ -1,0 +1,86 @@
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: #050507;
+  color: #f1e6dc;
+  font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+}
+
+#globe { position: fixed; inset: 0; }
+#globe canvas { display: block; }
+
+#topbar {
+  position: fixed; top: 0; left: 0; right: 0;
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 16px 24px;
+  pointer-events: none;
+  background: linear-gradient(#050507cc, transparent);
+}
+.brand { font-weight: 700; letter-spacing: 0.2em; color: #ff9a5c; }
+.brand span { color: #b9a89a; font-weight: 400; letter-spacing: 0.05em; }
+#coords { font-family: ui-monospace, Consolas, monospace; font-size: 13px; color: #b9a89a; }
+
+#demo-banner {
+  position: fixed; top: 60px; left: 50%; transform: translateX(-50%);
+  background: #3a1d10e6; border: 1px solid #ffffff1a;
+  padding: 8px 14px; border-radius: 8px; font-size: 13px;
+}
+#demo-banner code { color: #ffcf9f; }
+
+#controls-panel {
+  position: fixed; left: 24px; bottom: 24px;
+  background: #120c0acc; border: 1px solid #ffffff1a; border-radius: 12px;
+  padding: 14px 16px; width: 260px; font-size: 13px;
+  backdrop-filter: blur(6px);
+}
+#controls-panel label { display: block; }
+#controls-panel label + label { margin-top: 10px; }
+#controls-panel input[type="range"] { width: 100%; margin-top: 6px; accent-color: #ff7a3c; }
+#controls-panel .row { display: flex; gap: 8px; align-items: center; }
+
+/* Мітки місць на глобусі */
+#labels { position: fixed; inset: 0; pointer-events: none; }
+.site-label {
+  position: absolute; transform: translate(-50%, -100%);
+  pointer-events: auto; cursor: pointer;
+  display: flex; flex-direction: column; align-items: center;
+  transition: opacity 0.2s;
+}
+.site-label .name {
+  background: #120c0add; border: 1px solid #ffffff22;
+  padding: 3px 9px; border-radius: 999px; font-size: 12px; white-space: nowrap;
+}
+.site-label.soon .name { color: #b9a89a; }
+.site-label .stem { width: 1px; height: 14px; background: #ffffff88; }
+.site-label.soon .stem { background: #ffffff55; }
+.site-label:hover .name { background: #f1e6dc; color: #120c0a; }
+.site-label.hidden { opacity: 0; pointer-events: none; }
+
+#site-panel {
+  position: fixed; right: 24px; top: 50%; transform: translateY(-50%);
+  width: 340px;
+  background: #120c0ae6; border: 1px solid #ffffff1a; border-radius: 14px;
+  padding: 22px; backdrop-filter: blur(8px);
+}
+#site-panel h2 { margin: 6px 0 4px; font-size: 26px; }
+.site-status { font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; color: #ff9a5c; }
+.site-coords { font-family: ui-monospace, Consolas, monospace; font-size: 12px; color: #b9a89a; }
+#site-panel p { line-height: 1.5; font-size: 14px; color: #e3d5c9; }
+.buttons { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
+.btn {
+  font: inherit; font-size: 14px; text-align: center; text-decoration: none;
+  padding: 10px 14px; border-radius: 8px; cursor: pointer;
+  background: transparent; color: #f1e6dc; border: 1px solid #ffffff33;
+}
+.btn.primary { background: #ff7a3c; color: #120c0a; border-color: #ff7a3c; font-weight: 600; }
+.btn.disabled { opacity: 0.4; pointer-events: none; }
+
+#loading {
+  position: fixed; inset: 0; display: grid; place-items: center;
+  background: #050507; color: #b9a89a; letter-spacing: 0.1em;
+  transition: opacity 0.6s;
+}
+#loading.done { opacity: 0; pointer-events: none; }
