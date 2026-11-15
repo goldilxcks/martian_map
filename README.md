@@ -8,6 +8,9 @@ A layered, hyperlocal map and route planner for a human **Marswalk** (an EVA on 
 
 **Our answer.** One map, many layers, one route, with the safety rules built in: no slopes over 25° (a team-chosen limit), a safety buffer around hazards, and a guaranteed return to base.
 
+**Presentation.**
+
+https://canva.link/fm1f0rvz18njtnb
 ---
 
 ## Contents
