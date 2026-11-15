@@ -1,0 +1,59 @@
+{
+ "type": "FeatureCollection",
+ "name": "gale_landmarks",
+ "description": "Landmarks and exploration zone in Gale Crater (NASA Mars Trek). Coordinates [lon E, lat N].",
+ "features": [
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     137.4019,
+     -4.5965
+    ]
+   },
+   "properties": {
+    "name": "Exploration Zone FID 6"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     137.0,
+     -4.6
+    ]
+   },
+   "properties": {
+    "name": "Exploration Zone FID 7/8"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     137.8453,
+     -5.0834
+    ]
+   },
+   "properties": {
+    "name": "Aeolis Mons"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     137.811,
+     -5.3672
+    ]
+   },
+   "properties": {
+    "name": "Gale crater centre (Trek)"
+   }
+  }
+ ]
+}

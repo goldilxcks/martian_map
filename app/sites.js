@@ -19,6 +19,11 @@ window.SITES_CONFIG = {
     eva: { max_h: 6, crew: 2, speed_kmh: 2.5 },
     layers: [
       {
+        id: 'ctx_mosaic', name: 'Знімок CTX (6 м)', type: 'image', group: 'base',
+        url: '../public/data/jezero/ctx_mosaic.jpg',
+        bbox: [18.211027, 77.160465, 18.721194, 77.699178], opacity: 1,
+      },
+      {
         id: 'aqueous_minerals', name: 'Водні мінерали', type: 'geojson', group: 'science',
         url: '../public/data/jezero/aqueous_minerals.geojson', styleBy: 'class',
       },
@@ -37,6 +42,15 @@ window.SITES_CONFIG = {
     view_bbox: [-5.25, 137.65, -4.92, 138.03],
     objective: 'Дослідити boxwork — сітку мінеральних жил, які утворилися, коли підземна вода текла тріщинами в породі. Порівняти шари на різних висотах і повернутися на базу в межах ліміту виходу.',
     eva: { max_h: 6, crew: 2, speed_kmh: 2.5 },
-    layers: [],
+    layers: [
+      {
+        id: 'gale_minerals', name: 'Водні мінерали', type: 'geojson', group: 'science',
+        url: '../public/data/sharp/gale_minerals.geojson', styleBy: 'class',
+      },
+      {
+        id: 'gale_landmarks', name: 'Орієнтири Gale', type: 'geojson', group: 'base',
+        url: '../public/data/sharp/gale_landmarks.geojson', color: '#f2c14e',
+      },
+    ],
   },
 };

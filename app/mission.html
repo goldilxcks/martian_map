@@ -53,6 +53,9 @@
       <button class="btn" id="btn-default">Стандартні цілі</button>
       <button class="btn" id="btn-clear">Очистити</button>
     </div>
+    <label class="check" title="Перебирає порядок зупинок і обирає найкоротший безпечний шлях">
+      <input type="checkbox" id="opt-order" checked /> Автоматично впорядкувати зупинки
+    </label>
     <button class="btn primary" id="btn-route">Побудувати маршрут</button>
 
     <div id="summary" hidden>
@@ -62,11 +65,16 @@
         <div><span>Ходьба</span><b id="s-walk"></b></div>
         <div><span>Роботи на зупинках</span><b id="s-work"></b></div>
         <div><span>Макс. ухил</span><b id="s-slope"></b></div>
-        <div><span>Доза радіації</span><b id="s-dose"></b></div>
+        <div style="display:none"><span>Доза радіації</span><b id="s-dose"></b></div>
       </div>
       <div class="budget">
         <div class="budget-label"><span>Весь вихід</span><b id="s-total"></b></div>
         <div class="budget-bar"><div id="s-bar"></div></div>
+      </div>
+      <div id="profile-box" hidden>
+        <div class="eyebrow">Профіль висоти</div>
+        <canvas id="s-profile" height="110"></canvas>
+        <div class="profile-note" id="s-profile-note"></div>
       </div>
       <ul id="warnings"></ul>
       <button class="btn primary" data-goto="walk">Почати вихід →</button>

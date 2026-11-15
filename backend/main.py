@@ -118,10 +118,11 @@ class RouteRequest(BaseModel):
     targets: List[Point]
     return_to_start: bool = True
     max_eva_h: float = MAX_EVA_H
+    optimize_order: bool = False      # переставити проміжні зупинки, щоб шлях був найдешевшим
 
 
-def run_plan(grid, stops, max_eva_h):
-    result = grid.plan(stops, max_eva_h)
+def run_plan(grid, stops, max_eva_h, optimize_order=False):
+    result = grid.plan(stops, max_eva_h, optimize_order)
     if not result["ok"]:
         raise HTTPException(status_code=422, detail=result["error"])
     return result
@@ -172,7 +173,7 @@ def custom_route(site: str, req: RouteRequest):
     stops += [(t.lat, t.lon) for t in req.targets]
     if req.return_to_start:
         stops.append(stops[0])
-    return run_plan(grid, stops, req.max_eva_h)
+    return run_plan(grid, stops, req.max_eva_h, req.optimize_order)
 
 
 # Старі адреси без назви ділянки — працюють з ділянкою за замовчуванням

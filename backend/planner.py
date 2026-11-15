@@ -275,6 +275,47 @@ def astar(cost, start, goal):
     return None
 
 
+def path_cost(cost, path):
+    """Вартість шляху — та сама сума, яку мінімізує astar()."""
+    return float(sum(math.hypot(b[0] - a[0], b[1] - a[1]) * float(cost[a] + cost[b]) / 2
+                     for a, b in zip(path, path[1:])))
+
+
+MAX_OPT_STOPS = 10       # більше зупинок не оптимізуємо: шукати шляхи між усіма парами надто довго
+MAX_EXACT_STOPS = 8      # до стількох проміжних зупинок порядок шукаємо повним перебором
+
+
+def best_order(n, d):
+    """Найкращий порядок проміжних зупинок 1..n-2 між фіксованими 0 і n-1.
+    d[i][j] — вартість найдешевшого шляху між точками. Повертає список індексів."""
+    from itertools import permutations
+    mid = list(range(1, n - 1))
+    if len(mid) <= MAX_EXACT_STOPS:
+        best, best_c = mid, math.inf
+        for perm in permutations(mid):
+            seq = (0, *perm, n - 1)
+            c = sum(d[a][b] for a, b in zip(seq, seq[1:]))
+            if c < best_c:
+                best, best_c = list(perm), c
+        return best
+    # багато зупинок: найближчий сусід + 2-opt
+    order, left, cur = [], set(mid), 0
+    while left:
+        nxt = min(left, key=lambda j: d[cur][j])
+        order.append(nxt); left.remove(nxt); cur = nxt
+    seq = [0, *order, n - 1]
+    improved = True
+    while improved:
+        improved = False
+        for i in range(1, len(seq) - 2):
+            for j in range(i + 1, len(seq) - 1):
+                a, b, c, e = seq[i - 1], seq[i], seq[j], seq[j + 1]
+                if d[a][c] + d[b][e] < d[a][b] + d[c][e] - 1e-9:
+                    seq[i:j + 1] = reversed(seq[i:j + 1])
+                    improved = True
+    return seq[1:-1]
+
+
 class Grid:
     def __init__(self, grid_dir: Path, bbox, seed=1):
         """grid_dir: папка з grid.json і *.npy однієї ділянки.
@@ -297,6 +338,7 @@ class Grid:
                 slope = slope_from_dem(dem, self.cell_m)
             hazard = load("hazard")
             radiation = load("radiation")
+            self.dem = load("dem")        # висоти клітинок (м) для профілю висоти
             self.source = "real"
         else:
             self.bbox = tuple(bbox)
@@ -304,6 +346,7 @@ class Grid:
             self.cell_m = (self.bbox[2] - self.bbox[0]) * M_PER_DEG / FAKE_N
             slope = fake_slope(FAKE_N, seed)
             hazard = radiation = None
+            self.dem = None
             self.source = "fake"
 
         self.slope = slope
@@ -359,35 +402,89 @@ class Grid:
             "max_eva_h": MAX_EVA_H,
         }
 
-    def plan(self, stops, max_eva_h=MAX_EVA_H):
-        """stops: список (lat, lon). Повертає словник з маршрутом і підсумком."""
+    def plan(self, stops, max_eva_h=MAX_EVA_H, optimize_order=False):
+        """stops: список (lat, lon). Повертає словник з маршрутом і підсумком.
+
+        optimize_order: якщо маршрут кільцевий (старт = фініш), перебирає порядок проміжних
+        зупинок і обирає найдешевший за справжньою вартістю шляху A* (з урахуванням схилів)."""
         for lat, lon in stops:
             if not self.contains(lat, lon):
                 return {"ok": False,
                         "error": f"Точка ({lat}, {lon}) поза областю карти"}
         cells = [self.to_rowcol(lat, lon) for lat, lon in stops]
+        n = len(cells)
 
         warnings = []
         cost = self.cost.copy()
         for i, cell in enumerate(cells):
             if not np.isfinite(cost[cell]):
-                warnings.append(f"Точка {i + 1} лежить у небезпечній зоні")
+                name = "База" if i in (0, n - 1) else f"Точка {i}"
+                warnings.append(f"{name} лежить у небезпечній зоні")
             cost[cell] = 1.0
 
+        legs = {}    # (клітинка, клітинка) у відсортованому порядку -> шлях між ними
+
+        def leg(a, b):
+            # База стоїть на початку і в кінці, тож кешуємо за клітинками, а не за номерами точок
+            key = tuple(sorted((cells[a], cells[b])))
+            if key not in legs:
+                legs[key] = astar(cost, key[0], key[1])
+            seg = legs[key]
+            if seg is None:
+                return None
+            return seg if cells[a] == key[0] else seg[::-1]
+
+        seq = list(range(n))
+        optimized, gain_pct = False, None
+        if optimize_order and n - 2 > MAX_OPT_STOPS:
+            warnings.append(f"Автопорядок працює до {MAX_OPT_STOPS} зупинок, тож порядок лишився як є")
+        elif optimize_order and n >= 4 and cells[0] == cells[-1]:
+            d = [[0.0] * n for _ in range(n)]
+            for i in range(n):
+                for j in range(i + 1, n):
+                    if (i, j) == (0, n - 1):
+                        continue                      # старт і фініш — та сама клітинка
+                    seg = leg(i, j)
+                    if seg is None:
+                        return {"ok": False, "error": "Безпечного шляху між точками немає"}
+                    d[i][j] = d[j][i] = path_cost(cost, seg)
+            order = best_order(n, d)
+            seq = [0, *order, n - 1]
+            given = sum(d[a][b] for a, b in zip(range(n), range(1, n)))
+            best = sum(d[a][b] for a, b in zip(seq, seq[1:]))
+            gain_pct = round((given - best) / given * 100, 1) if given > 0 else 0.0
+            optimized = True
+
         path = []
-        for a, b in zip(cells, cells[1:]):
-            seg = astar(cost, a, b)
+        for a, b in zip(seq, seq[1:]):
+            seg = leg(a, b)
             if seg is None:
                 return {"ok": False, "error": "Безпечного шляху між точками немає"}
             path += seg if not path else seg[1:]
 
-        dist_km = sum(math.hypot(p[0] - q[0], p[1] - q[1])
-                      for p, q in zip(path, path[1:])) * self.cell_m / 1000
+        steps = [math.hypot(p[0] - q[0], p[1] - q[1]) for p, q in zip(path, path[1:])]
+        dist_km = sum(steps) * self.cell_m / 1000
         time_h = dist_km / SPEED_KMH
         within = time_h <= max_eva_h
         if not within:
             warnings.append(
                 f"Маршрут {time_h:.1f} год перевищує ліміт {max_eva_h} год")
+
+        # Профіль висоти вздовж шляху (є лише для ділянок зі справжнім DEM)
+        profile, ascent, descent = None, None, None
+        if self.dem is not None:
+            z = np.array([self.dem[p] for p in path], dtype=float)
+            good = np.isfinite(z)
+            if good.any():
+                if not good.all():
+                    idx = np.arange(len(z))
+                    z = np.interp(idx, idx[good], z[good])
+                cum_km = np.concatenate([[0.0], np.cumsum(steps)]) * self.cell_m / 1000
+                dz = np.diff(z)
+                ascent, descent = round(float(dz[dz > 0].sum()), 1), round(float(-dz[dz < 0].sum()), 1)
+                pick = np.unique(np.linspace(0, len(path) - 1, min(len(path), 160)).astype(int))
+                profile = [[round(float(cum_km[k]), 3), round(float(z[k]), 1),
+                            round(float(self.slope[path[k]]), 1)] for k in pick]
 
         return {
             "ok": True,
@@ -404,8 +501,13 @@ class Grid:
                 "max_slope_deg": round(float(max(self.slope[p] for p in path)), 1),
                 "radiation_dose_msv": round(RAD_MSV_PER_DAY / 24 * time_h, 3),
                 "within_eva_limit": within,
-                "waypoints": [self.to_lonlat(c) for c in cells],
+                "waypoints": [self.to_lonlat(cells[i]) for i in seq],
+                "order": [i - 1 for i in seq[1:-1]],      # індекси проміжних зупинок у новому порядку
+                "optimized": optimized,
+                "order_gain_pct": gain_pct,
+                "ascent_m": ascent,
+                "descent_m": descent,
+                "profile": profile,                       # [[км, висота м, ухил °], ...]
             },
             "warnings": warnings,
         }
-

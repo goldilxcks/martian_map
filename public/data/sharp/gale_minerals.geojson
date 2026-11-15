@@ -1,0 +1,91 @@
+{
+ "type": "FeatureCollection",
+ "name": "gale_minerals",
+ "description": "Aqueous mineral detections in Gale Crater (NASA Mars Trek). Coordinates [lon E, lat N].",
+ "features": [
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     137.64,
+     -5.33
+    ]
+   },
+   "properties": {
+    "fid": "462/463",
+    "class": "phyllosilicate"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     136.88,
+     -4.84
+    ]
+   },
+   "properties": {
+    "fid": "3517/3518",
+    "class": "phyllosilicate"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     136.75,
+     -4.98
+    ]
+   },
+   "properties": {
+    "fid": "24/25",
+    "class": "silica"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     136.6,
+     -5.06
+    ]
+   },
+   "properties": {
+    "fid": "466/467",
+    "class": "phyllosilicate"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     136.67,
+     -5.12
+    ]
+   },
+   "properties": {
+    "fid": "3519/3520",
+    "class": "phyllosilicate"
+   }
+  },
+  {
+   "type": "Feature",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     137.22,
+     -4.15
+    ]
+   },
+   "properties": {
+    "fid": "464/465",
+    "class": "phyllosilicate"
+   }
+  }
+ ]
+}
