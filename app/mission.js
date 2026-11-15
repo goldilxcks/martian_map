@@ -274,6 +274,7 @@ async function buildRoute() {
   const home = state.targets.habitat;
   const limit = state.site.eva.max_h;
   $('btn-route').disabled = true;
+  if ($('opt-order').checked && state.stops.length >= 5) toast('Шукаю найкращий порядок зупинок, це може зайняти кілька секунд…', 6000);
   try {
     const res = await getJSON(`${API}/api/${SITE_ID}/route`, {
       method: 'POST',
@@ -283,9 +284,11 @@ async function buildRoute() {
         targets: state.stops.map((s) => ({ lat: s.lat, lon: s.lon })),
         return_to_start: true,
         max_eva_h: limit,
+        optimize_order: $('opt-order').checked,
       }),
     });
     state.route = res;
+    applyStopOrder(res);
     drawRoute(res);
     renderSummary(res, limit);
     return true;
@@ -295,6 +298,57 @@ async function buildRoute() {
   } finally {
     $('btn-route').disabled = false;
   }
+}
+
+// Якщо бекенд переставив зупинки — показуємо їх у новому порядку (і для режиму «Вихід»)
+function applyStopOrder(res) {
+  const sum = res.summary;
+  if (!sum.optimized || !Array.isArray(sum.order) || sum.order.length !== state.stops.length) return;
+  const old = state.stops;
+  state.stops = sum.order.map((i) => old[i]);
+  state.stops.forEach((s, i) => { if (/^Точка \d+$/.test(s.name)) s.name = `Точка ${i + 1}`; });
+  renderStops();
+  if (sum.order_gain_pct > 0) toast(`Порядок зупинок оптимізовано: шлях коротший приблизно на ${sum.order_gain_pct}%`, 5000);
+}
+
+// Профіль висоти: висота вздовж маршруту, колір лінії — за ухилом
+function drawProfile(sum) {
+  const box = $('profile-box');
+  const pts = sum.profile;
+  if (!pts || pts.length < 2) { box.hidden = true; return; }
+  box.hidden = false;
+  const cv = $('s-profile');
+  const dpr = window.devicePixelRatio || 1;
+  const W = cv.clientWidth || 300, H = 110;
+  cv.width = W * dpr; cv.height = H * dpr;
+  const g = cv.getContext('2d');
+  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  g.clearRect(0, 0, W, H);
+  const padL = 40, padR = 8, padT = 10, padB = 20;
+  const maxKm = pts[pts.length - 1][0] || 1;
+  const zs = pts.map((p) => p[1]);
+  let zmin = Math.min(...zs), zmax = Math.max(...zs);
+  if (zmax - zmin < 20) { const m = (zmax + zmin) / 2; zmin = m - 10; zmax = m + 10; }
+  const X = (km) => padL + (km / maxKm) * (W - padL - padR);
+  const Y = (z) => padT + (1 - (z - zmin) / (zmax - zmin)) * (H - padT - padB);
+  g.fillStyle = 'rgba(90,209,255,0.10)';
+  g.beginPath(); g.moveTo(X(0), H - padB);
+  pts.forEach((p) => g.lineTo(X(p[0]), Y(p[1])));
+  g.lineTo(X(maxKm), H - padB); g.closePath(); g.fill();
+  const slopeColor = (a) => (a > 25 ? '#e62828' : a > 18 ? '#ff8c28' : a > 10 ? '#ffdc3c' : '#5ad1ff');
+  g.lineWidth = 2; g.lineJoin = 'round';
+  for (let i = 1; i < pts.length; i++) {
+    g.strokeStyle = slopeColor(Math.max(pts[i - 1][2], pts[i][2]));
+    g.beginPath(); g.moveTo(X(pts[i - 1][0]), Y(pts[i - 1][1])); g.lineTo(X(pts[i][0]), Y(pts[i][1])); g.stroke();
+  }
+  g.fillStyle = '#8f8076'; g.font = '10px sans-serif'; g.textBaseline = 'middle';
+  g.textAlign = 'right';
+  g.fillText(`${Math.round(zmax)} м`, padL - 4, Y(zmax)); g.fillText(`${Math.round(zmin)} м`, padL - 4, Y(zmin));
+  g.textAlign = 'left'; g.textBaseline = 'alphabetic';
+  g.fillText('0 км', padL, H - 5);
+  g.textAlign = 'right'; g.fillText(`${maxKm.toFixed(1)} км`, W - padR, H - 5);
+  const gain = sum.ascent_m != null ? `Набір висоти ${Math.round(sum.ascent_m)} м, спуск ${Math.round(sum.descent_m)} м. ` : '';
+  $('s-profile-note').textContent = `${gain}Висоти — з DEM CTX (клітинки ≈ 78 м), тому дрібні перепади згладжено. Колір лінії — ухил.`;
 }
 
 function routeLatLngs(res) {
@@ -326,6 +380,7 @@ function renderSummary(res, limit) {
   $('data-source').textContent = res.data_source === 'fake'
     ? 'Маршрут побудовано на тестових ухилах. Коли команда додасть справжню сітку в grid/, він стане реальним.' : '';
   $('summary').hidden = false;
+  drawProfile(s);
 }
 
 // ---------------------------------------------------------------------------

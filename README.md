@@ -36,9 +36,12 @@ A layered, hyperlocal map and route planner for a human **Marswalk** (an EVA on 
 | Mission briefing page and map | ✅ | ✅ |
 | NASA MOLA colour-relief base map | ✅ | ✅ |
 | Slope map and no-go zones from a 20 m CTX DEM | ✅ real data | ❌ not yet |
+| CTX orbital image (6 m/pixel) as a base layer | ✅ | ❌ |
 | Aqueous-mineral detections | ✅ | ✅ (6 points) + Gale landmarks |
 | Click-to-add stops and A\* route with safety rules | ✅ real terrain | ⚠️ **synthetic terrain only** (see [limitations](#limitations-and-known-issues)) |
 | Route summary: distance, walking time, time at stops, max slope, EVA-limit bar | ✅ | ⚠️ |
+| Automatic ordering of stops (cheapest safe order) | ✅ | ⚠️ |
+| Elevation profile along the route, coloured by slope | ✅ | ❌ (needs a DEM) |
 | Animated "walk" mode | ✅ | ⚠️ |
 
 **Jezero is the fully working site.** Mount Sharp shows its map layers, but we have no regional elevation model for it yet.
@@ -163,7 +166,19 @@ where $g(n)$ is the accumulated cost from the start and $h(n)=\|goal-n\|$ is the
 
 A route with several stops is built leg by leg (base → stop 1 → … → base) and the legs are concatenated.
 
-### 6. Route summary
+### 6. Order of stops
+
+For a round trip with $k$ intermediate stops there are $k!$ possible orders. We first compute the true minimum cost $d_{ij}$ between **every pair** of points with A\* (the cost is symmetric, so $\binom{k+1}{2}$ searches are enough, because the base counts once), then choose the order that minimises
+
+$$\sum_{t=0}^{k} d_{\pi_t\,\pi_{t+1}},\qquad \pi_0=\pi_{k+1}=\text{base}$$
+
+For $k \le 8$ all $k!$ orders are checked exactly (at most 40 320 sums of table lookups, which is instant); for $9$–$10$ stops we use nearest-neighbour followed by 2-opt improvement. Because $d_{ij}$ already includes slopes and no-go zones, "shortest" means the cheapest safe order, not just the shortest straight-line order. The response reports how much the cost dropped compared with the clicked order (`order_gain_pct`).
+
+### 7. Elevation profile
+
+For every cell on the final path the planner reads its elevation $z_i$ from `dem.npy` and the cumulative distance $s_i=\text{cell size}\cdot\sum \ell$ along the path. Ascent and descent are $\sum \max(\Delta z,0)$ and $\sum \max(-\Delta z,0)$. At most 160 points $(s_i, z_i, \theta_i)$ are returned and drawn as a chart whose line colour follows the slope $\theta_i$.
+
+### 8. Route summary
 
 Along the final cell path, with $N$ steps of length $\ell_i\in\{1,\sqrt2\}$ in cells:
 
@@ -171,7 +186,7 @@ $$D = \frac{\text{cell size}}{1000}\sum_{i=1}^{N}\ell_i\ \ [\text{km}],\qquad T_
 
 The panel adds the time spent working at stops and compares the total with the EVA limit (6 h). Maximum slope is the largest θ among the cells on the path. If $T_{walk}$ exceeds the limit, a warning is shown.
 
-### 7. Coordinates
+### 9. Coordinates
 
 The API works in latitude/longitude. A point is mapped to a grid cell by linear interpolation inside the grid bounding box. The bounding box is computed from cell **centres**, so conversion between map coordinates and cells is consistent in both directions. GeoJSON output uses `[lon, lat]` order.
 
@@ -184,7 +199,7 @@ By design the project uses only the resources provided by NASA for the challenge
 | Layer | Source | Used for |
 |---|---|---|
 | **Jezero DEM**, 20 m/pixel (`JEZ_ctx_B_soc_008_DTM_MOLAtopography_DeltaGeoid_20m…tif`) | MRO CTX stereo DEM, USGS Astrogeology | Slope map, cost map, routing |
-| **Jezero orthomosaic**, 6 m/pixel (`…orthoMosaic_6m…zip`) | MRO CTX, USGS Astrogeology | Optical context (stored; not yet shown on the map) |
+| **Jezero orthomosaic**, 6 m/pixel (`…orthoMosaic_6m…zip`) | MRO CTX, USGS Astrogeology | Optical base layer (downsampled to 2048 px, ≈ 2.9 m/pixel, contrast-stretched) |
 | **MOLA colour relief**, 463 m/pixel | MGS MOLA, via Mars Trek tiles | Base map in the browser |
 | **MOLA elevation (MEGDR)** | MGS MOLA | Height of the 3D globe |
 | **Aqueous Mineral Distribution** | Mars Trek layer compiled from CRISM, OMEGA, THEMIS; Ehlmann & Edwards (2014), *Annu. Rev. Earth Planet. Sci.* 42:291–315 | Science layer (14 hand-collected points for Jezero, 6 for Gale) |
@@ -222,7 +237,8 @@ We would rather state these than hide them.
 - **Resolution.** The Jezero DEM is 20 m, coarsened to 78 m cells. Boulders, small craters and sand ripples cannot be seen at this scale. The global MOLA data (463 m/pixel) is even coarser. The map shows **slope**, not trafficability.
 - **Mount Sharp has no real routing yet.** There is no regional DEM for it in the repository. For a site without a grid the backend falls back to **synthetic placeholder terrain** (`data_source: "fake"`). Routes there are for demonstration only and must not be read as real hazards.
 - **"Standard targets" are not science targets.** There is no `targets.json` for Jezero, so the *Стандартні цілі* button uses the planner's placeholder demo stops. Real science targets would come from the team's science data.
-- **Stop order is not optimised.** A\* finds the cheapest path between consecutive stops in the order given. Scattered stops produce long routes, and the planner shows a warning when the route exceeds 6 h.
+- **Stop order.** With *Автоматично впорядкувати зупинки* ticked, the planner searches for the cheapest order (up to 10 stops; more than that keeps the order given). With it off, stops are visited in the order they were clicked. Scattered stops can still produce routes longer than 6 h; the planner then shows a warning. Finding the order takes a few seconds for 6–8 far-apart stops.
+- **Elevation profile is approximate.** Heights come from the DEM averaged over ≈ 78 m cells, so small bumps are smoothed out and ascent/descent totals are estimates.
 - **No time-dependent data.** Lighting, temperature, weather and dust storms are missing, though they decide when an excursion is safe.
 - **Radiation is intentionally not modelled.** No radiation data was in the NASA resources provided for the challenge. The backend still contains an unverified placeholder (`RAD_MSV_PER_DAY`) that appears in the API response as `radiation_dose_msv`; **it is not a result and should be ignored.**
 - **Ground-level imagery** (Perseverance raw images) is not yet linked to targets.
@@ -243,13 +259,13 @@ backend/
   planner.py              Slope grid, cost map, A* route planner
   requirements.txt        fastapi, uvicorn[standard], numpy
 public/data/
-  jezero/                 grid/ (slope.npy, dem.npy, grid.json), slope.png, aqueous_minerals.geojson
+  jezero/                 grid/ (slope.npy, dem.npy, grid.json), slope.png, ctx_mosaic.jpg, aqueous_minerals.geojson
   sharp/                  Gale mineral and landmark layers (GeoJSON)
   Gale/                   Raw Gale points (tif + legend csv)
   JEZ_ctx_*               Source CTX DEM (tif) and orthomosaic (zip)
   sources.md              Data sources, citations, limitations
 scripts/
-  data/                   make_grid.py, make_overlays.py, prepare_textures.py, fetch_color_tiles.py
+  data/                   make_grid.py, make_overlays.py, make_ctx_overlay.py, prepare_textures.py, fetch_color_tiles.py
   routing/route.py        First standalone routing prototype
 ```
 
@@ -275,10 +291,10 @@ curl -X POST http://localhost:8000/api/jezero/route \
   -H "Content-Type: application/json" \
   -d '{"start": {"lat": 18.5289, "lon": 77.3406},
        "targets": [{"lat": 18.5275, "lon": 77.3703}],
-       "return_to_start": true, "max_eva_h": 6}'
+       "return_to_start": true, "max_eva_h": 6, "optimize_order": true}'
 ```
 
-The response contains the route as a GeoJSON `LineString`, a `summary` (distance in km, time in hours, maximum slope, whether it fits the EVA limit, waypoints) and a list of `warnings` (for example a stop inside a hazard zone, or a route longer than the limit). Old unprefixed endpoints (`/api/grid`, `/api/route`, …) use Jezero.
+The response contains the route as a GeoJSON `LineString`, a `summary` (distance in km, time in hours, maximum slope, whether it fits the EVA limit, waypoints, the visiting `order` of the stops, `order_gain_pct`, `ascent_m` / `descent_m` and the elevation `profile` as `[km, metres, slope°]` triples) and a list of `warnings` (for example a stop inside a hazard zone, or a route longer than the limit). Old unprefixed endpoints (`/api/grid`, `/api/route`, …) use Jezero.
 
 ---
 
@@ -300,6 +316,15 @@ python3 scripts/data/make_overlays.py public/data/jezero/grid public/data/jezero
 
 `--factor` sets how many source pixels form one grid cell; 4 gives ≈ 78 m cells.
 
+```bash
+# 3. optical base layer from the CTX orthomosaic (reads the zip directly)
+python3 scripts/data/make_ctx_overlay.py \
+  public/data/JEZ_ctx_B_soc_008_orthoMosaic_6m_Eqc_latTs0_lon0.zip \
+  public/data/jezero/ctx_mosaic.jpg --width 2048
+```
+
+The script prints the `bbox` to put into `app/sites.js`.
+
 ---
 
 ## Use of AI
@@ -315,8 +340,7 @@ In line with the challenge rules on synthetic intelligence (SI):
 ## Future work
 
 - Real routing for Mount Sharp (regional DEM and slope grid).
-- Automatic ordering of stops (nearest-neighbour or a small travelling-salesman search).
-- More layers: THEMIS night infrared (thermal inertia), geologic map, CTX orthomosaic as a base layer.
+- More layers: THEMIS night infrared (thermal inertia), geologic map.
 - Perseverance raw images linked to each target, so astronauts can preview a stop.
 - Time-dependent factors: lighting, temperature, weather, dust.
 - A mission editor and real-time data.
